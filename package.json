@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "verify:live": "node scripts/verify-live-only.mjs"
+    "verify:live": "node scripts/verify-live-only.mjs",
+    "verify:genlayer": "node scripts/verify-genlayer-contract.mjs",
+    "verify:prod": "node scripts/verify-production.mjs"
   },
   "dependencies": {
     "ethers": "^6.15.0",

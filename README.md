@@ -2,7 +2,7 @@
 
 GenLayer Intelligent Finance Studio is a GenLayer contribution project derived from the QuyNhon on-chain finance dashboard.
 
-The goal is to turn a live finance operating system into a GenLayer-ready product: a frontend for market research and trading workflows, plus a contribution path for Python intelligent contracts that can validate off-chain finance facts, reason over AI outputs, and produce auditable on-chain decisions through GenLayer Studio.
+The goal is to turn a live finance operating system into a GenLayer product: a frontend for market research and trading workflows plus a deployed Python intelligent contract that validates off-chain finance facts, reasons over AI outputs, and produces auditable on-chain decisions through GenLayer Studio.
 
 ## Why GenLayer
 
@@ -17,15 +17,15 @@ The GenLayer project boilerplate shows the expected shape of a complete contribu
 - a frontend
 - contract linting and CI
 
-This repo adapts the QuyNhon finance dashboard into that structure gradually, without pretending the GenLayer contract layer is already deployed.
+This repo adapts the QuyNhon finance dashboard into that structure and includes a deployed GenLayer Studionet contract.
 
 ## What This Repo Contains Now
 
 This initial contribution package includes:
 
 - A Next.js 15 finance dashboard inherited from QuyNhon
-- SoDEX market/trading workflow UI
-- SoSoValue-style research and AI report workflows
+- Execution-adapter market and trade-intent workflow UI
+- Source-feed research and Groq AI provenance workflows
 - Local realtime bot bridge UI
 - Screenshot-backed README documentation
 - A GenLayer contribution plan
@@ -51,7 +51,7 @@ GenLayer Intelligent Finance Studio explores a better pattern:
 4. Use GenLayer consensus/verifiability to record the reasoning result.
 5. Keep local bot automation separate and observable.
 
-## Proposed Intelligent Contracts
+## Deployed Intelligent Contract
 
 The deployed GenLayer layer focuses on finance decision verification rather than direct custody.
 
@@ -66,7 +66,7 @@ Validates that a submitted signal includes:
 - risk score
 - proposed action
 
-Expected contract behavior:
+Contract behavior:
 
 - reject incomplete attestations
 - store accepted signal summaries
@@ -77,7 +77,7 @@ Expected contract behavior:
 
 Stores normalized AI reports generated from live context.
 
-Expected contract behavior:
+Contract behavior:
 
 - accept report hash, prompt class, source list, and timestamp
 - require deterministic metadata fields
@@ -88,7 +88,7 @@ Expected contract behavior:
 
 Does not custody funds. Instead, records whether a proposed trade intent passed policy.
 
-Expected contract behavior:
+Contract behavior:
 
 - validate max notional, leverage, market, direction, and risk threshold
 - record approved/rejected status
@@ -106,7 +106,7 @@ Expected contract behavior:
 - Orders and Positions
 - Automation
 - Local Trade Bot
-- Jinbot Cross Signals
+- Local Runtime Signals
 - API Health
 - Security
 
@@ -190,7 +190,7 @@ Build:
 npm run build
 ```
 
-## GenLayer Tooling To Add
+## GenLayer Tooling
 
 Based on the official boilerplate, the next repo iteration should add:
 
@@ -203,7 +203,7 @@ pytest tests/direct/ -v
 gltest tests/integration/ -v -s
 ```
 
-Those commands are listed here as the target workflow; this repo does not yet vendor GenLayer boilerplate dependencies.
+The deployed contract was verified with the GenLayer CLI against Studionet.
 
 ## Contribution Positioning
 

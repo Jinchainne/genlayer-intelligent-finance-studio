@@ -63,7 +63,7 @@ Policy:
 Purpose:
 
 - record whether a proposed trade intent passed policy before execution
-- keep execution in the existing SoDEX/local bot workflow
+- keep execution in the existing execution-adapter/local runtime workflow
 
 Inputs:
 
