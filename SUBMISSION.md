@@ -20,11 +20,11 @@ https://github.com/Jinchainne/genlayer-intelligent-finance-studio
 
 ## Short Description
 
-A GenLayer-ready finance operator studio that connects live market research, AI reports, trading workflow UX, local bot monitoring, and a roadmap for Python intelligent contracts that attest market signals, register AI reports, and guard trade intents.
+A GenLayer finance operator studio that connects live market research, Groq AI reports, trading workflow UX, local runtime monitoring, and a deployed Python intelligent contract for signal attestations, AI report provenance, and trade-intent policy checks.
 
 ## Contribution Type
 
-Builder contribution / Chain Studio application / intelligent contract prototype roadmap.
+Builder contribution / Chain Studio application / deployed Studionet intelligent contract prototype.
 
 ## Problem
 
@@ -37,7 +37,7 @@ This contribution turns the QuyNhon finance dashboard into a GenLayer-ready stud
 - the frontend collects and displays market/research context
 - AI report workflows produce structured rationale
 - local bot controls show real automation events and trade history
-- the planned GenLayer contracts record signal attestations, AI report provenance, and trade intent policy checks
+- the deployed GenLayer Studionet contract records signal attestations, AI report provenance, and trade intent policy checks
 
 ## Why It Matters To GenLayer
 
@@ -53,7 +53,7 @@ GenLayer is strongest when AI, web data, and consensus-style verification meet p
 - Next.js product surface copied from QuyNhon and prepared as a new GenLayer repo
 - GenLayer-specific README
 - contribution submission draft
-- contract roadmap under `contracts/`
+- deployed contract source and metadata under `contracts/`
 - local bot evidence and screenshots retained from the original product
 - environment and security notes
 
@@ -71,3 +71,4 @@ GenLayer is strongest when AI, web data, and consensus-style verification meet p
 - Studio: https://studio.genlayer.com/contracts
 - Portal: https://portal.genlayer.foundation/submit-contribution
 - GenLayer GitHub: https://github.com/genlayerlabs
+

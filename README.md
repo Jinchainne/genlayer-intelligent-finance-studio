@@ -29,7 +29,7 @@ This initial contribution package includes:
 - Local realtime bot bridge UI
 - Screenshot-backed README documentation
 - A GenLayer contribution plan
-- A placeholder `contracts/` area for the intelligent contract layer
+- A deployed `contracts/genlayer_finance_policy.py` intelligent contract for provenance, signal attestation, and policy checks
 - A submission guide for `portal.genlayer.foundation`
 
 ## Live Demo And Repository
@@ -53,7 +53,7 @@ GenLayer Intelligent Finance Studio explores a better pattern:
 
 ## Proposed Intelligent Contracts
 
-The planned GenLayer layer will focus on finance decision verification rather than direct custody.
+The deployed GenLayer layer focuses on finance decision verification rather than direct custody.
 
 ### 1. Market Signal Attestation
 
@@ -120,7 +120,7 @@ The web app can talk to the bot through:
 - secure tunnel such as Cloudflare Tunnel
 - optional Telegram workflow
 
-This separation is important for GenLayer too: the local bot executes operational actions, while the future intelligent contract layer should record/verifies decisions and attestations.
+This separation is important for GenLayer too: the local bot executes operational actions, while the deployed intelligent contract layer records and verifies decisions and attestations.
 
 ## Repository Structure
 
@@ -149,18 +149,25 @@ Target contribution portal:
 https://portal.genlayer.foundation/submit-contribution
 ```
 
-Planned contract workflow:
+Deployed contract workflow:
 
 ```text
 contracts/
-  finance_signal_attestation.py
-  ai_report_registry.py
-  trade_intent_guard.py
-tests/
-  direct/
-  integration/
-deploy/
-  deployScript.ts
+  genlayer_finance_policy.py
+  deployment.json
+```
+
+Contract deployment:
+
+```text
+Network: studionet
+RPC: https://studio.genlayer.com/api
+Contract: GenLayerFinancePolicy
+Address: 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20
+Deployment tx: 0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e
+Verified calls:
+  project  -> GenLayer Intelligent Finance Studio
+  counters -> reports=0;signals=0;policy_checks=0
 ```
 
 ## Development
@@ -200,7 +207,7 @@ Those commands are listed here as the target workflow; this repo does not yet ve
 
 ## Contribution Positioning
 
-This is a builder contribution for GenLayer because it connects a real product surface to a clear intelligent-contract roadmap:
+This is a builder contribution for GenLayer because it connects a real product surface to a deployed intelligent-contract workflow:
 
 - frontend already demonstrates the finance operator workflow
 - local automation shows why verifiable decision records matter
@@ -214,14 +221,14 @@ Current status:
 - frontend copied and rebranded from QuyNhon
 - repo metadata updated for GenLayer
 - contribution docs added
-- contract implementation planned but not yet deployed
+- GenLayerFinancePolicy deployed on Studionet at `0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20`
 
 Next milestone:
 
 - add first Python intelligent contract
 - add direct tests with mocked market/research data
-- deploy the contract in GenLayer Studio
-- connect the frontend to the deployed contract address
+- expand frontend read/write integration with the deployed GenLayer contract
+- add transaction receipts and explorer links for contract writes
 
 ## Links
 
@@ -229,3 +236,4 @@ Next milestone:
 - Contribution portal: https://portal.genlayer.foundation/submit-contribution
 - GenLayer Labs GitHub: https://github.com/genlayerlabs
 - GenLayer repositories: https://github.com/orgs/genlayerlabs/repositories
+

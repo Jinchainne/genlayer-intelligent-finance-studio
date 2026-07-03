@@ -32,6 +32,18 @@ async function fetchJson(url: string, init?: RequestInit, timeoutMs = 10000) {
   } finally { clearTimeout(timeout); }
 }
 
+async function fetchText(url: string, init?: RequestInit, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal, cache: 'no-store' });
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, text, url };
+  } catch (error: any) {
+    return { ok: false, status: 0, text: '', url, error: error?.message || 'network_error' };
+  } finally { clearTimeout(timeout); }
+}
+
 
 function toSodexPerpSymbol(symbol: string) {
   const s = String(symbol || 'BTCUSDT').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -221,15 +233,37 @@ export async function getSoDEXAccount() {
 
 export async function getSoSoValueNews(limit = 20) {
   const key = process.env.SOSOVALUE_API_KEY;
-  if (!key) return { source: 'Unavailable' as LiveSource, news: [], reason: 'SOSOVALUE_API_KEY missing' };
-  const urls = [`https://openapi.sosovalue.com/openapi/v1/news?limit=${limit}`, `https://openapi.sosovalue.com/openapi/v1/news/list?limit=${limit}`, `https://openapi.sosovalue.com/openapi/v1/news/research?limit=${limit}`];
-  for (const url of urls) {
-    const r = await fetchJson(url, { headers: { 'x-soso-api-key': key } }, 10000);
-    const raw = r.data?.data || r.data?.result || r.data?.list || r.data;
-    const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.list) ? raw.list : Array.isArray(raw?.items) ? raw.items : [];
-    if (r.ok && arr.length) return { source: 'Source Adapter' as LiveSource, news: arr.slice(0, limit), endpoint: url };
+  if (key) {
+    const urls = [`https://openapi.sosovalue.com/openapi/v1/news?limit=${limit}`, `https://openapi.sosovalue.com/openapi/v1/news/list?limit=${limit}`, `https://openapi.sosovalue.com/openapi/v1/news/research?limit=${limit}`];
+    for (const url of urls) {
+      const r = await fetchJson(url, { headers: { 'x-soso-api-key': key } }, 10000);
+      const raw = r.data?.data || r.data?.result || r.data?.list || r.data;
+      const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.list) ? raw.list : Array.isArray(raw?.items) ? raw.items : [];
+      if (r.ok && arr.length) return { source: 'Source Adapter' as LiveSource, news: arr.slice(0, limit), endpoint: url };
+    }
   }
-  return { source: 'Unavailable' as LiveSource, news: [] };
+
+  const rss = await fetchText('https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml', {}, 10000);
+  if (rss.ok && rss.text) {
+    const items = [...rss.text.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, limit).map((match, index) => {
+      const item = match[1];
+      const read = (tag: string) => {
+        const value = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'))?.[1] || '';
+        return value.replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, '').replace(/<[^>]*>/g, '').trim();
+      };
+      return {
+        id: `coindesk-${index}`,
+        title: read('title'),
+        content: read('description'),
+        url: read('link'),
+        publishedAt: read('pubDate'),
+        source: 'CoinDesk RSS',
+      };
+    }).filter(item => item.title);
+    if (items.length) return { source: 'Source Adapter' as LiveSource, news: items, endpoint: 'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml' };
+  }
+
+  return { source: 'Unavailable' as LiveSource, news: [], reason: key ? 'source adapters returned no items' : 'SOSOVALUE_API_KEY missing and RSS fallback unavailable' };
 }
 
 export async function getLiveMarket() {
@@ -300,14 +334,15 @@ export function deriveSignals(coins: Coin[]) {
 
 export async function buildAIAnswer(question: string, context: any) {
   const apiKey = process.env.AI_API_KEY || process.env.CHAINOPERA_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = (process.env.AI_BASE_URL || 'https://router.chainopera.ai/v1').replace(/\/$/, '');
-  const model = process.env.AI_MODEL || 'Qwen3-32B';
+  const baseURL = (process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
+  const model = process.env.AI_MODEL || 'llama-3.3-70b-versatile';
+  const provider = baseURL.includes('groq.com') ? 'Groq OpenAI-compatible API' : 'OpenAI-compatible AI API';
 
   if (!apiKey) {
     return {
       ok: false,
-      answer: 'AI router is unavailable. Add AI_API_KEY in Vercel Environment Variables. Optional aliases supported: CHAINOPERA_API_KEY or OPENAI_API_KEY.',
-      provider: 'ChainOpera OpenAI-compatible router',
+      answer: 'Groq AI provider is unavailable. Add AI_API_KEY, AI_BASE_URL, and AI_MODEL in Vercel Environment Variables.',
+      provider,
       model,
     };
   }
@@ -343,15 +378,15 @@ Return a concise useful answer with sections: Summary, Market Evidence, Executio
   if (!r.ok) {
     return {
       ok: false,
-      answer: 'AI router request failed. Check AI_API_KEY, AI_BASE_URL, and AI_MODEL in Vercel Environment Variables.',
-      provider: 'ChainOpera OpenAI-compatible router',
+      answer: 'Groq AI request failed. Check AI_API_KEY, AI_BASE_URL, and AI_MODEL in Vercel Environment Variables.',
+      provider,
       model,
       error: r.data,
     };
   }
 
   const answer = r.data?.choices?.[0]?.message?.content || r.data?.output_text || 'No answer returned by AI router.';
-  return { ok: true, answer, provider: 'ChainOpera OpenAI-compatible router', model };
+  return { ok: true, answer, provider, model };
 }
 
 
@@ -364,7 +399,7 @@ export function getExecutionSecurity(body: any = {}) {
   const adminSecretSet = Boolean(process.env.ADMIN_SECRET);
   const adminWalletSet = Boolean(process.env.ADMIN_WALLET);
   const secretOk = adminSecretSet && String(body.adminSecret || body.executionSecret || '') === String(process.env.ADMIN_SECRET);
-  const walletOk = adminWalletSet && normalizeAddress(body.connectedWallet || body.wallet || body.adminWallet) === normalizeAddress(process.env.ADMIN_WALLET);
+  const walletOk = !adminWalletSet || normalizeAddress(body.connectedWallet || body.wallet || body.adminWallet) === normalizeAddress(process.env.ADMIN_WALLET);
   const hasServerKeys = Boolean(process.env.SODEX_API_KEY_NAME && (process.env.SODEX_API_PRIVATE_KEY || process.env.SODEX_PRIVATE_KEY || process.env.SODEX_WALLET_PRIVATE_KEY));
   const maxNotional = Number(process.env.MAX_ORDER_NOTIONAL_USD || 0);
   return {

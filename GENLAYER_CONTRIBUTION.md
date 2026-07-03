@@ -113,3 +113,4 @@ Follow the GenLayer project boilerplate pattern:
 - direct tests pass
 - Studio deployment screenshot added
 - frontend reads at least one contract view method
+
