@@ -4,6 +4,20 @@
 
 GenLayer Intelligent Finance Studio
 
+## Links
+
+Live demo:
+
+```text
+https://genlayer-intelligent-finance-studio.vercel.app
+```
+
+GitHub:
+
+```text
+https://github.com/Jinchainne/genlayer-intelligent-finance-studio
+```
+
 ## Short Description
 
 A GenLayer-ready finance operator studio that connects live market research, AI reports, trading workflow UX, local bot monitoring, and a roadmap for Python intelligent contracts that attest market signals, register AI reports, and guard trade intents.
@@ -52,7 +66,7 @@ GenLayer is strongest when AI, web data, and consensus-style verification meet p
 - integration test notes for GenLayer Studio
 - frontend contract address integration
 
-## Links
+## GenLayer Links
 
 - Studio: https://studio.genlayer.com/contracts
 - Portal: https://portal.genlayer.foundation/submit-contribution

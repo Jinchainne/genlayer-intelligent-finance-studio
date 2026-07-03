@@ -32,6 +32,13 @@ This initial contribution package includes:
 - A placeholder `contracts/` area for the intelligent contract layer
 - A submission guide for `portal.genlayer.foundation`
 
+## Live Demo And Repository
+
+```text
+Live demo: https://genlayer-intelligent-finance-studio.vercel.app
+GitHub: https://github.com/Jinchainne/genlayer-intelligent-finance-studio
+```
+
 ## Product Concept
 
 Traditional finance dashboards are mostly off-chain and trust-heavy. Trading bots are usually local scripts with weak audit trails. AI reports are rarely linked to verifiable execution decisions.
