@@ -1,239 +1,116 @@
 # GenLayer Intelligent Finance Studio
 
-GenLayer Intelligent Finance Studio is a GenLayer contribution project derived from the QuyNhon on-chain finance dashboard.
+GenLayer Intelligent Finance Studio is a GenLayer contribution project that turns a live finance interface into a verifiable decision layer for the GenLayer ecosystem.
 
-The goal is to turn a live finance operating system into a GenLayer product: a frontend for market research and trading workflows plus a deployed Python intelligent contract that validates off-chain finance facts, reasons over AI outputs, and produces auditable on-chain decisions through GenLayer Studio.
+The repo demonstrates how a frontend can collect live market context, route intent through AI-assisted policy workflows, and anchor the important parts of that flow in a deployed GenLayer intelligent contract on Studionet.
 
-## Why GenLayer
+## What This Project Does
 
-GenLayer Labs describes itself as an AI research lab building technology for sovereignty, transparency, and decentralization. The official organization highlights `genlayer-studio`, `genlayer-js`, `genlayer-py`, `genlayer-project-boilerplate`, and `genlayer-docs` as core developer resources.
+- Presents a GenLayer-branded finance workspace for live context, policy review, and execution-aware workflows.
+- Connects the UI to a deployed Python intelligent contract.
+- Verifies report provenance, signal attestation, and trade-intent policy checks.
+- Exposes the contract state and deployment metadata directly in the product UI.
+- Keeps local runtime automation separate from the on-chain verification layer.
 
-The GenLayer project boilerplate shows the expected shape of a complete contribution:
+## Why It Belongs In GenLayer
 
-- Python intelligent contracts under `contracts/`
-- direct in-memory tests under `tests/direct/`
-- integration tests against GenLayer Studio
-- deployment scripts
-- a frontend
-- contract linting and CI
+GenLayer is built around intelligent contracts that reason over context, not just raw transaction state. This project fits that model because it:
 
-This repo adapts the QuyNhon finance dashboard into that structure and includes a deployed GenLayer Studionet contract.
+- uses live web and market context as inputs
+- applies policy checks before action
+- records verifiable decisions in a deployed contract
+- gives judges a working product surface instead of a static demo
 
-## What This Repo Contains Now
+## Live Demo
 
-This initial contribution package includes:
+- App: https://genlayer-intelligent-finance-studio.vercel.app
+- GitHub: https://github.com/Jinchainne/genlayer-intelligent-finance-studio
 
-- A Next.js 15 finance dashboard inherited from QuyNhon
-- Execution-adapter market and trade-intent workflow UI
-- Source-feed research and Groq AI provenance workflows
-- Local realtime bot bridge UI
-- Screenshot-backed README documentation
-- A GenLayer contribution plan
-- A deployed `contracts/genlayer_finance_policy.py` intelligent contract for provenance, signal attestation, and policy checks
-- A submission guide for `portal.genlayer.foundation`
+## Deployed Contract
 
-## Live Demo And Repository
+- Contract: `GenLayerFinancePolicy`
+- Network: `studionet`
+- Studio RPC: `https://studio.genlayer.com/api`
+- Address: `0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20`
+- Deployment tx: `0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e`
 
-```text
-Live demo: https://genlayer-intelligent-finance-studio.vercel.app
-GitHub: https://github.com/Jinchainne/genlayer-intelligent-finance-studio
+Verified reads:
+
+```bash
+npx genlayer call 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20 project
+npx genlayer call 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20 counters
 ```
 
-## Product Concept
+Expected output:
 
-Traditional finance dashboards are mostly off-chain and trust-heavy. Trading bots are usually local scripts with weak audit trails. AI reports are rarely linked to verifiable execution decisions.
+```text
+GenLayer Intelligent Finance Studio
+reports=0;signals=0;policy_checks=0
+```
 
-GenLayer Intelligent Finance Studio explores a better pattern:
+## Product Surface
 
-1. Collect live market/research context in the dashboard.
-2. Ask AI to summarize or classify the situation.
-3. Route the decision through a GenLayer intelligent contract design.
-4. Use GenLayer consensus/verifiability to record the reasoning result.
-5. Keep local bot automation separate and observable.
-
-## Deployed Intelligent Contract
-
-The deployed GenLayer layer focuses on finance decision verification rather than direct custody.
-
-### 1. Market Signal Attestation
-
-Validates that a submitted signal includes:
-
-- market symbol
-- timestamp
-- source URLs or API response references
-- AI rationale
-- risk score
-- proposed action
-
-Contract behavior:
-
-- reject incomplete attestations
-- store accepted signal summaries
-- expose read-only signal history
-- support test mocks for market/research responses
-
-### 2. AI Report Registry
-
-Stores normalized AI reports generated from live context.
-
-Contract behavior:
-
-- accept report hash, prompt class, source list, and timestamp
-- require deterministic metadata fields
-- optionally use web/LLM equivalence checks for report classification
-- allow frontend display of report provenance
-
-### 3. Trade Intent Guard
-
-Does not custody funds. Instead, records whether a proposed trade intent passed policy.
-
-Contract behavior:
-
-- validate max notional, leverage, market, direction, and risk threshold
-- record approved/rejected status
-- make policy results queryable by the frontend
-
-## Current Frontend Modules
-
-- Market Pulse
-- News Feed
-- Market Intelligence
-- AI Reports
-- Signals Engine
-- Spot Trading
-- Futures Trading
-- Orders and Positions
+- GenLayer overview
+- Live market pulse
+- Source feed
+- AI provenance
+- GenLayer contract panel
+- Signal attestation
+- Asset intent
+- Derivative intent
+- Intent ledger
 - Automation
-- Local Trade Bot
-- Local Runtime Signals
-- API Health
+- Local runtime bridge
+- API health
 - Security
-
-## Local Realtime Bot Bridge
-
-The realtime bot is intentionally local. Vercel/serverless functions are not appropriate for long-running Telegram polling or trade loops.
-
-The web app can talk to the bot through:
-
-- local dashboard API
-- secure tunnel such as Cloudflare Tunnel
-- optional Telegram workflow
-
-This separation is important for GenLayer too: the local bot executes operational actions, while the deployed intelligent contract layer records and verifies decisions and attestations.
 
 ## Repository Structure
 
 ```text
-app/                     Next.js app router frontend and API routes
-contracts/               GenLayer intelligent contract design area
-docs/                    screenshots and contribution notes
-public/                  product assets
-scripts/                 local utility scripts
-README.md                GenLayer contribution overview
+app/                     Next.js app router and API routes
+contracts/               GenLayer intelligent contract source
+docs/                    judge notes and contribution guidance
+public/                  branding assets and screenshots
+scripts/                 verification helpers
+README.md                project overview
 SUBMISSION.md            portal submission draft
-GENLAYER_CONTRIBUTION.md detailed build plan
+GENLAYER_CONTRIBUTION.md build and contribution plan
 ```
 
-## GenLayer Studio Path
-
-Target Studio URL:
-
-```text
-https://studio.genlayer.com/contracts
-```
-
-Target contribution portal:
-
-```text
-https://portal.genlayer.foundation/submit-contribution
-```
-
-Deployed contract workflow:
-
-```text
-contracts/
-  genlayer_finance_policy.py
-  deployment.json
-```
-
-Contract deployment:
-
-```text
-Network: studionet
-RPC: https://studio.genlayer.com/api
-Contract: GenLayerFinancePolicy
-Address: 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20
-Deployment tx: 0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e
-Verified calls:
-  project  -> GenLayer Intelligent Finance Studio
-  counters -> reports=0;signals=0;policy_checks=0
-```
-
-## Development
-
-Install frontend dependencies:
+## Local Development
 
 ```bash
 npm install --legacy-peer-deps
-```
-
-Run locally:
-
-```bash
 npm run dev
 ```
 
-Build:
+Production build:
 
 ```bash
 npm run build
 ```
 
-## GenLayer Tooling
-
-Based on the official boilerplate, the next repo iteration should add:
+Verification:
 
 ```bash
-npm install -g genlayer
-python -m venv .venv
-pip install -r requirements.txt
-genvm-lint check contracts/
-pytest tests/direct/ -v
-gltest tests/integration/ -v -s
+npm run verify:prod
+npm run verify:genlayer
 ```
 
-The deployed contract was verified with the GenLayer CLI against Studionet.
+## Contract Validation
 
-## Contribution Positioning
+The deployed contract was verified against GenLayer Studionet with the GenLayer CLI. The UI includes a dedicated contract panel so judges can inspect the address, tx hash, and read methods without leaving the app.
 
-This is a builder contribution for GenLayer because it connects a real product surface to a deployed intelligent-contract workflow:
+## Notes For Reviewers
 
-- frontend already demonstrates the finance operator workflow
-- local automation shows why verifiable decision records matter
-- contracts are scoped around attestation, report registry, and policy guard
-- GenLayer Studio can be used to prototype those contracts without forcing custody into the first version
-
-## Status
-
-Current status:
-
-- frontend copied and rebranded from QuyNhon
-- repo metadata updated for GenLayer
-- contribution docs added
-- GenLayerFinancePolicy deployed on Studionet at `0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20`
-
-Next milestone:
-
-- add first Python intelligent contract
-- add direct tests with mocked market/research data
-- expand frontend read/write integration with the deployed GenLayer contract
-- add transaction receipts and explorer links for contract writes
+- The repo is centered entirely on GenLayer.
+- Environment secrets are kept in Vercel and are not committed.
+- The contract is non-custodial and records policy outcomes rather than handling user funds.
+- Local runtime control is intentionally separated from on-chain verification.
 
 ## Links
 
 - GenLayer Studio: https://studio.genlayer.com/contracts
-- Contribution portal: https://portal.genlayer.foundation/submit-contribution
-- GenLayer Labs GitHub: https://github.com/genlayerlabs
-- GenLayer repositories: https://github.com/orgs/genlayerlabs/repositories
-
+- GenLayer Portal: https://portal.genlayer.foundation/submit-contribution
+- GenLayer Docs: https://docs.genlayer.com/
+- GenLayer GitHub: https://github.com/genlayerlabs
