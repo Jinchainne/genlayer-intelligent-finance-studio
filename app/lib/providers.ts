@@ -9,7 +9,7 @@ const SODEX_PUBLIC = 'https://mainnet-gw.sodex.com/api/v1';
 const SODEX_ALT = 'https://mainnet-gw.sodex.dev/api/v1';
 const SODEX_PERPS = 'https://mainnet-gw.sodex.dev/api/v1/perps';
 
-export type LiveSource = 'SoDEX' | 'SoSoValue' | 'CoinGecko' | 'Binance' | 'Unavailable';
+export type LiveSource = 'SoDEX' | 'Execution Adapter' | 'Source Adapter' | 'CoinGecko' | 'Binance' | 'Unavailable';
 export type Coin = {
   id: string; symbol: string; name: string; image?: string;
   current_price?: number | null; market_cap?: number | null; market_cap_rank?: number | null; total_volume?: number | null;
@@ -56,7 +56,7 @@ function canonicalOrderPayload(data: any) {
 
 async function signSodexPayload(method: 'POST' | 'DELETE', paramsStr: string) {
   const privateKey = process.env.SODEX_API_PRIVATE_KEY || process.env.SODEX_PRIVATE_KEY || process.env.SODEX_WALLET_PRIVATE_KEY;
-  if (!privateKey) throw new Error('Missing SoDEX private key in server environment');
+  if (!privateKey) throw new Error('Missing execution adapter private key in server environment');
   const nonce = Date.now();
   const actionType = method === 'DELETE' ? 'cancelOrder' : 'newOrder';
   const payloadStr = `{"type":"${actionType}","params":${paramsStr}}`;
@@ -91,7 +91,7 @@ async function sodexSignedRequest(method: 'POST' | 'DELETE', endpoint: string, p
   });
   const text = await res.text();
   let data: any; try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
-  if (!res.ok) throw new Error(`SoDEX HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Execution adapter HTTP ${res.status}`);
   return data?.data ?? data;
 }
 
@@ -227,7 +227,7 @@ export async function getSoSoValueNews(limit = 20) {
     const r = await fetchJson(url, { headers: { 'x-soso-api-key': key } }, 10000);
     const raw = r.data?.data || r.data?.result || r.data?.list || r.data;
     const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.list) ? raw.list : Array.isArray(raw?.items) ? raw.items : [];
-    if (r.ok && arr.length) return { source: 'SoSoValue' as LiveSource, news: arr.slice(0, limit), endpoint: url };
+    if (r.ok && arr.length) return { source: 'Source Adapter' as LiveSource, news: arr.slice(0, limit), endpoint: url };
   }
   return { source: 'Unavailable' as LiveSource, news: [] };
 }
@@ -243,8 +243,9 @@ export async function getLiveMarket() {
     if (coins.length) sourceChain.push('Binance');
   }
   if (sodex.source === 'SoDEX') sourceChain.unshift('SoDEX');
-  if (news.source === 'SoSoValue') sourceChain.push('SoSoValue');
-  return { ok: true, updatedAt: new Date().toISOString(), sources: sourceChain.length ? sourceChain : ['Unavailable'], coins, global: global.global, sodex: sodex.data, news: news.news };
+  if (news.source === 'Source Adapter') sourceChain.push('Source Adapter');
+  const displaySources = sourceChain.map(source => source === 'SoDEX' ? 'Execution Adapter' as LiveSource : source);
+  return { ok: true, updatedAt: new Date().toISOString(), sources: displaySources.length ? displaySources : ['Unavailable'], coins, global: global.global, sodex: sodex.data, news: news.news };
 }
 
 export async function getTradeTerminal(symbol = 'BTCUSDT', interval = '5m') {
@@ -266,20 +267,21 @@ export async function getTradeTerminal(symbol = 'BTCUSDT', interval = '5m') {
     : { bids: depth.bids, asks: depth.asks, source: depth.source };
   const recentTrades = sodexPerps.trades?.length ? sodexPerps.trades : trades.trades;
   const livePrice = sodexPerps.markPrice || ticker.ticker?.price || null;
+  const displaySources = sources.map(source => source === 'SoDEX' ? 'Execution Adapter' as LiveSource : source);
   return {
     ok:true,
     updatedAt:new Date().toISOString(),
     symbol: cleanSymbol,
     perpsSymbol: sodexPerps.symbol,
-    sources: sources.length ? sources : ['Unavailable'],
+    sources: displaySources.length ? displaySources : ['Unavailable'],
     ticker: ticker.ticker ? { ...ticker.ticker, price: livePrice, sodexMarkPrice: sodexPerps.markPrice } : { symbol: cleanSymbol, price: livePrice },
-    orderBook,
+    orderBook: { ...orderBook, source: orderBook.source === 'SoDEX' ? 'Execution Adapter' as LiveSource : orderBook.source },
     trades: recentTrades,
     candles: klines.candles,
     sodex: { spotMarkets: sodex.data, perps: sodexPerps, account: perpsAccount },
     account: perpsAccount.account || perpsAccount.balances?.length || perpsAccount.orders?.length || perpsAccount.positions?.length
       ? { connected:true, account: perpsAccount.account, balances: perpsAccount.balances, orders: perpsAccount.orders, positions: perpsAccount.positions }
-      : { connected:false, reason: (perpsAccount as any).reason || 'SoDEX account unavailable' }
+      : { connected:false, reason: (perpsAccount as any).reason || 'Execution adapter account unavailable' }
   };
 }
 
@@ -317,7 +319,7 @@ ${JSON.stringify(context).slice(0, 22000)}
 User request:
 ${question}
 
-Return a concise useful answer with sections: Summary, Market Evidence, SoDEX Execution Context, Risks, Next Action.`;
+Return a concise useful answer with sections: Summary, Market Evidence, Execution Adapter Context, Risks, Next Action.`;
 
   const r = await fetchJson(`${baseURL}/chat/completions`, {
     method: 'POST',
@@ -436,10 +438,10 @@ export async function createExecutionPreview(body: any) {
     secretExposure: 'No private key, signature, nonce, admin secret or payload hash is returned to the browser.'
   };
   if (!valid) preview.warnings.push('Enter a valid market and amount before submitting.');
-  if (!security.liveTradingEnabled) preview.warnings.push('Live trading disabled by server. This generated a server-side order preview only.');
-  if (security.liveTradingEnabled && !security.secretOk) preview.warnings.push('Live trading requires ADMIN_SECRET unlock.');
-  if (security.liveTradingEnabled && !security.walletOk) preview.warnings.push('Live trading requires connected wallet to match ADMIN_WALLET.');
-  if (!security.hasServerKeys) preview.warnings.push('SoDEX server execution keys are not fully configured.');
+  if (!security.liveTradingEnabled) preview.warnings.push('Execution adapter disabled by server. This generated a policy preview only.');
+  if (security.liveTradingEnabled && !security.secretOk) preview.warnings.push('Execution adapter requires ADMIN_SECRET unlock.');
+  if (security.liveTradingEnabled && !security.walletOk) preview.warnings.push('Execution adapter requires connected wallet to match ADMIN_WALLET.');
+  if (!security.hasServerKeys) preview.warnings.push('Execution adapter server keys are not fully configured.');
   if (!sizeAllowed) preview.warnings.push(`Order exceeds MAX_ORDER_NOTIONAL_USD (${security.maxNotional}).`);
   const maxLev = Number(process.env.MAX_LEVERAGE || 0);
   if (product === 'futures' && maxLev > 0 && safe.leverage > maxLev) { preview.ok = false; preview.canSubmitLive = false; preview.security.liveAuthorized = false; preview.warnings.push(`Leverage exceeds MAX_LEVERAGE (${maxLev}x).`); }
@@ -457,7 +459,7 @@ export async function createExecutionPreview(body: any) {
       mode: safe.futuresCloseMode,
       note: 'The browser scheduler submits a reduce-only opposite-side close order after the configured time. Serverless cron can also run previews when AUTO_TRADE_CONFIG is configured.'
     };
-    preview.warnings.push('Futures auto-close is enabled. Keep the terminal open for browser scheduling, or configure external automation for guaranteed execution.');
+    preview.warnings.push('Derivative intent auto-close is enabled. Keep the terminal open for browser scheduling, or configure external automation for guaranteed execution.');
   }
   if (product === 'spot' && safe.spotAutoClose === 'random_1_3m') {
     preview.autoClosePlan = {
@@ -466,7 +468,7 @@ export async function createExecutionPreview(body: any) {
       closeSide: safe.side === 'sell' ? 'buy' : 'sell',
       note: 'Browser scheduler will submit the opposite-side close order after a random delay. Serverless functions cannot sleep for 1-3 minutes without an external queue.'
     };
-    preview.warnings.push('Spot auto-close is enabled. Keep the terminal open or configure an external scheduler for guaranteed execution.');
+    preview.warnings.push('Asset intent auto-close is enabled. Keep the terminal open or configure an external scheduler for guaranteed execution.');
   }
   return preview;
 }
@@ -476,7 +478,7 @@ export async function executeSodexOrder(body: any) {
   if (!preview.canSubmitLive) return { ...preview, submitted: false };
   const accountID = await getSodexAccountId();
   const symbolID = await getSodexSymbolId(preview.preview.market);
-  if (!accountID || !symbolID) return { ...preview, submitted: false, error: 'SoDEX accountID or symbolID unavailable' };
+  if (!accountID || !symbolID) return { ...preview, submitted: false, error: 'Execution adapter accountID or symbolID unavailable' };
   const terminal = await getTradeTerminal(preview.preview.market, '5m');
   const mark = Number(terminal.ticker?.price || 0);
   const price = preview.preview.price || mark;
@@ -498,3 +500,5 @@ export async function executeSodexOrder(body: any) {
   const result = await sodexSignedRequest('POST', '/trade/orders', paramsStr);
   return { ok: true, submitted: true, mode: 'live-submitted', orderId: result?.[0]?.orderId || result?.orderID || ord.clOrdID, market: preview.preview.sodexMarket, side: preview.preview.side, product: preview.preview.product, secretExposure: 'No secret returned.' };
 }
+
+

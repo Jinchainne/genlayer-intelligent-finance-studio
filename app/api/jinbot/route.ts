@@ -245,7 +245,7 @@ export async function GET() {
   const signalRows = (httpSignals.length ? httpSignals : fileSignals).map(normalizeSignal).slice(0, 25);
   return NextResponse.json({
     ok: Boolean(status.result?.ok || signals.result?.ok || positions.result?.ok || stateFile.ok),
-    name: 'JINBOT_SODEX CROSS bridge',
+    name: 'GenLayer Local Runtime bridge',
     mode: 'local-http-file-or-telegram',
     updatedAt: new Date().toISOString(),
     configured: {
@@ -301,7 +301,9 @@ export async function POST(req: NextRequest) {
     deliveredBy: local.ok ? 'local-bridge' : telegram.ok ? 'telegram' : 'none',
     local,
     telegram,
-    message: local.ok || telegram.ok ? 'Command forwarded to JINBOT_SODEX CROSS.' : `Command was not delivered. Local bridge failed and Telegram is unavailable: ${safeJson(telegram)}`,
+    message: local.ok || telegram.ok ? 'Command forwarded to GenLayer local runtime.' : `Command was not delivered. Local bridge failed and Telegram is unavailable: ${safeJson(telegram)}`,
     secretExposure: 'No Telegram token, bridge secret, admin secret or private key is returned.',
   }, { status: local.ok || telegram.ok ? 200 : 502 });
 }
+
+
