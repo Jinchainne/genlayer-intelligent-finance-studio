@@ -63,6 +63,10 @@ async function getGenLayerPrivateKey() {
   return readUnlockedPrivateKeyFromKeychain();
 }
 
+export function allowsEphemeralGenLayerSigner() {
+  return process.env.GENLAYER_DISABLE_EPHEMERAL_SIGNER !== 'true';
+}
+
 function getChain(network: string) {
   return CHAINS[String(network || 'studionet').toLowerCase()] || studionet;
 }
@@ -152,13 +156,13 @@ async function getReadClient() {
 async function getWriteClient() {
   const cfg = getGenLayerConfig();
   const privateKey = await getGenLayerPrivateKey();
-  if (!privateKey) {
+  if (!privateKey && !allowsEphemeralGenLayerSigner()) {
     throw new Error('GenLayer signer not configured. Set GENLAYER_PRIVATE_KEY on deploy, or unlock the local GenLayer account for development.');
   }
   return createClient({
     chain: cfg.chain,
     endpoint: cfg.rpc,
-    account: createAccount(privateKey as `0x${string}`),
+    account: privateKey ? createAccount(privateKey as `0x${string}`) : createAccount(),
   });
 }
 
@@ -242,7 +246,8 @@ export async function getGenLayerContractState() {
     countersParsed: parseKeyValueString(counters.result),
     latestState: latestState.result,
     latestStateParsed: parseLatestStateString(latestState.result),
-    signerConfigured: Boolean(signerKey),
+    signerConfigured: Boolean(signerKey) || allowsEphemeralGenLayerSigner(),
+    signerMode: signerKey ? 'configured' : 'ephemeral-policy-signer',
     source: 'genlayer-js',
   };
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getGenLayerConfig } from '../../lib/genlayer';
+import { allowsEphemeralGenLayerSigner, getGenLayerConfig } from '../../lib/genlayer';
 export const dynamic = 'force-dynamic';
 export async function GET(){
   const genlayer = getGenLayerConfig();
@@ -12,7 +12,8 @@ export async function GET(){
       genLayerContractAddress: genlayer.address || null,
       genLayerDeploymentTx: genlayer.txHash || null,
       genLayerRpcUrl: genlayer.rpc,
-      genLayerWriteSigner: Boolean(process.env.GENLAYER_PRIVATE_KEY || process.env.GENLAYER_ACCOUNT_PRIVATE_KEY || process.env.GENLAYER_WALLET_PRIVATE_KEY),
+      genLayerWriteSigner: Boolean(process.env.GENLAYER_PRIVATE_KEY || process.env.GENLAYER_ACCOUNT_PRIVATE_KEY || process.env.GENLAYER_WALLET_PRIVATE_KEY) || allowsEphemeralGenLayerSigner(),
+      genLayerSignerMode: (process.env.GENLAYER_PRIVATE_KEY || process.env.GENLAYER_ACCOUNT_PRIVATE_KEY || process.env.GENLAYER_WALLET_PRIVATE_KEY) ? 'configured' : 'ephemeral-policy-signer',
       sourceFeedAdapter:Boolean(process.env.SOSOVALUE_API_KEY),
       executionAdapterKeyName:Boolean(process.env.SODEX_API_KEY_NAME),
       executionAdapterPublicKey:Boolean(process.env.SODEX_PUBLIC_KEY),
