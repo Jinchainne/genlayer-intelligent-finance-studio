@@ -29,6 +29,7 @@
     "typescript": "^5.7.2"
   },
   "overrides": {
+    "dockerode": "^5.0.1",
     "postcss": "$postcss"
   }
 }
