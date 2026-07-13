@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getGenLayerConfig } from '../../lib/genlayer';
 export const dynamic = 'force-dynamic';
 export async function GET(){
+  const genlayer = getGenLayerConfig();
   return NextResponse.json({
     ok:true,
     name:'GenLayer Intelligent Finance Studio',
     liveOnly:true,
     configured:{
-      genLayerNetwork: process.env.GENLAYER_NETWORK || 'studionet',
-      genLayerContractAddress: process.env.GENLAYER_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || null,
-      genLayerDeploymentTx: process.env.GENLAYER_DEPLOYMENT_TX || null,
+      genLayerNetwork: genlayer.network,
+      genLayerContractAddress: genlayer.address || null,
+      genLayerDeploymentTx: genlayer.txHash || null,
+      genLayerRpcUrl: genlayer.rpc,
+      genLayerWriteSigner: Boolean(process.env.GENLAYER_PRIVATE_KEY || process.env.GENLAYER_ACCOUNT_PRIVATE_KEY || process.env.GENLAYER_WALLET_PRIVATE_KEY),
       sourceFeedAdapter:Boolean(process.env.SOSOVALUE_API_KEY),
       executionAdapterKeyName:Boolean(process.env.SODEX_API_KEY_NAME),
       executionAdapterPublicKey:Boolean(process.env.SODEX_PUBLIC_KEY),
@@ -29,4 +33,3 @@ export async function GET(){
     secretExposure:'No private key, Telegram token, admin secret or bridge secret is returned.'
   });
 }
-

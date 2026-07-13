@@ -2,11 +2,11 @@
   "network": "studionet",
   "rpc": "https://studio.genlayer.com/api",
   "contract": "GenLayerFinancePolicy",
-  "address": "0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20",
-  "deploymentTx": "0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e",
+  "address": "0x1C5973c789E5E6C92eAFE454E2cc70443F9cC3AC",
+  "deploymentTx": "0xf59cd494af7ecdbdc35ea6ac09c3dd3fdbe19515b2e3689c1a49bf97e8b7e0a1",
   "constructorArgs": ["GenLayer Intelligent Finance Studio"],
   "verifiedCalls": {
     "project": "GenLayer Intelligent Finance Studio",
-    "counters": "reports=0;signals=0;policy_checks=0"
+    "countersPattern": "reports=<number>;signals=<number>;policy_checks=<number>"
   }
 }

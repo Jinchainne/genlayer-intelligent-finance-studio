@@ -45,7 +45,7 @@ const nav = [
 
 const symbols = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','SUIUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','LINKUSDT','AAVEUSDT','UNIUSDT'];
 const intervals = ['1m','5m','15m','1h','4h','1d'];
-const genLayerContractAddress = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20';
+const genLayerContractAddress = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0x1C5973c789E5E6C92eAFE454E2cc70443F9cC3AC';
 
 function money(n:any, compact=true){ if(n===null||n===undefined||Number.isNaN(Number(n))) return 'Unavailable'; return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:compact?'compact':'standard',maximumFractionDigits:Number(n)>100?2:6}).format(Number(n)); }
 function num(n:any){ if(n===null||n===undefined||Number.isNaN(Number(n))) return 'Unavailable'; return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2}).format(Number(n)); }
@@ -62,6 +62,7 @@ export default function Page(){
   const [live,setLive] = useState<Live|null>(null);
   const [terminal,setTerminal] = useState<TradeTerminal|null>(null);
   const [health,setHealth] = useState<any>(null);
+  const [contractState,setContractState] = useState<any>(null);
   const [loading,setLoading] = useState(true);
   const [wallet,setWallet] = useState<string|null>(null);
   const [paperMode,setPaperMode] = useState(true);
@@ -105,7 +106,8 @@ export default function Page(){
         fetch(`/api/trade?symbol=${symbol}&interval=${interval}`,{cache:'no-store'}).then(r=>r.json()),
         fetch('/api/health',{cache:'no-store'}).then(r=>r.json())
       ]);
-      setLive(l); setTerminal(t); setHealth(h);
+      const g = await fetch('/api/genlayer',{cache:'no-store'}).then(r=>r.json()).catch((error:any)=>({ ok:false, error:error?.message || 'genlayer_unavailable' }));
+      setLive(l); setTerminal(t); setHealth(h); setContractState(g);
     } finally { setLoading(false); }
   }
   useEffect(()=>{ load(); },[symbol,interval]);
@@ -258,7 +260,7 @@ export default function Page(){
         {active==='news' && <NewsFeed news={news}/>} 
         {active==='research' && <MarketIntelligence live={live} terminal={terminal} news={news} signals={signals} coins={coins}/>} 
         {active==='reports' && <AIReports news={news} aiQ={aiQ} setAiQ={setAiQ} ask={ask} asking={asking} aiA={aiA} signals={signals} terminal={terminal}/>} 
-        {active==='contract' && <GenLayerContractPanel health={health}/>} 
+        {active==='contract' && <GenLayerContractPanel health={health} contractState={contractState} refresh={load} />} 
         {active==='signals' && <SignalEngine signals={signals}/>} 
         {active==='orders' && <OrdersPositions terminal={terminal} execResult={execResult} pendingSpotCloses={pendingSpotCloses} pendingFuturesCloses={pendingFuturesCloses} adminSecret={adminSecret} setAdminSecret={setAdminSecret} wallet={wallet}/>} 
         {active==='portfolio' && <Portfolio wallet={wallet} terminal={terminal}/>} 
@@ -350,15 +352,25 @@ function MarketIntelligence({live,terminal,news,signals,coins}:any){
   </div>
 }
 function AIReports({news,aiQ,setAiQ,ask,asking,aiA,signals,terminal}:any){ return <div className="grid grid-cols-12 gap-4"><Card className="col-span-12 xl:col-span-5"><h3 className="text-2xl font-black mb-2">AI Provenance Generator</h3><p className="text-slate-400 mb-4">Generates a provenance-ready brief using live source context, execution depth, policy signals and your prompt.</p><select className="input" onChange={e=>setAiQ(e.target.value)}><option value="Analyze this BTC policy intent using live adapter depth, source feed context and GenLayer-ready risk rules.">BTC Policy Intent</option><option value="Create a daily market report using live Source Adapter headlines and market momentum.">Daily Intelligence Brief</option><option value="Summarize the latest Source Adapter news and explain market risks.">Source Feed Summary</option><option value="Review current order book and signal candidates for futures risk.">Derivative Risk Brief</option></select><textarea value={aiQ} onChange={e=>setAiQ(e.target.value)} className="input h-36"/><button onClick={ask} className="rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-500 px-5 py-3 font-black">{asking?'Analyzing...':'Generate Provenance Brief'}</button><pre className="no-data rounded-2xl p-4 mt-4 whitespace-pre-wrap max-h-[520px] overflow-auto">{aiA||'Groq will use AI_API_KEY, AI_BASE_URL, AI_MODEL plus live source and execution-adapter context.'}</pre></Card><Card className="col-span-12 xl:col-span-7"><h3 className="text-2xl font-black mb-4">Report Context</h3><div className="grid md:grid-cols-4 gap-3 mb-5"><div className="pill rounded-2xl p-4"><p className="text-xs text-slate-400">RESEARCH ITEMS</p><b className="text-2xl">{(news||[]).length}</b></div><div className="pill rounded-2xl p-4"><p className="text-xs text-slate-400">SIGNAL CANDIDATES</p><b className="text-2xl">{(signals||[]).length}</b></div><div className="pill rounded-2xl p-4"><p className="text-xs text-slate-400">AI PROVIDER</p><b className="text-xl">Groq</b><p className="text-xs text-slate-400 mt-1">llama-3.3-70b-versatile</p></div><div className="pill rounded-2xl p-4"><p className="text-xs text-slate-400">GENLAYER CONTRACT</p><b className="text-sm break-all">{genLayerContractAddress}</b><p className="text-xs text-slate-400 mt-1">studionet</p></div></div><h4 className="font-black text-lg mb-3">Latest Source Feed Items</h4>{(news||[]).slice(0,6).map((n:any,i:number)=><div key={i} className="py-3 border-b border-slate-800"><h5 className="font-black">{n.title||n.newsTitle||n.content||'Live research item'}</h5><p className="text-xs text-slate-400 mt-1">{n.source||'Source Adapter'}</p></div>)}</Card></div> }
-function GenLayerContractPanel({health}:any){
+function GenLayerContractPanel({health, contractState, refresh}:any){
   const cfg = health?.configured || {};
-  const address = cfg.genLayerContractAddress || genLayerContractAddress;
-  const tx = cfg.genLayerDeploymentTx || '0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e';
-  const network = cfg.genLayerNetwork || 'studionet';
+  const address = contractState?.address || cfg.genLayerContractAddress || genLayerContractAddress;
+  const tx = contractState?.txHash || cfg.genLayerDeploymentTx || '0xf59cd494af7ecdbdc35ea6ac09c3dd3fdbe19515b2e3689c1a49bf97e8b7e0a1';
+  const network = contractState?.network || cfg.genLayerNetwork || 'studionet';
   const explorer = `https://genlayer-explorer.vercel.app/transactions/${tx}`;
+  const liveProject = contractState?.project || 'Loading from GenLayer...';
+  const liveCounters = contractState?.counters || 'Loading from GenLayer...';
+  const liveState = contractState?.latestState || 'Loading from GenLayer...';
   return <div className="grid grid-cols-12 gap-4">
-    <Card className="col-span-12 xl:col-span-5"><div className="flex items-center gap-3"><Layers3 className="text-cyan-300"/><div><h3 className="text-2xl font-black">GenLayerFinancePolicy</h3><p className="text-slate-400">{network} intelligent contract</p></div></div><div className="mt-5 space-y-3"><MetricTiny label="Contract address" value={<span className="break-all text-cyan-200">{address}</span>}/><MetricTiny label="Deployment tx" value={<span className="break-all text-violet-200">{tx}</span>}/><MetricTiny label="Verified project()" value="GenLayer Intelligent Finance Studio"/><MetricTiny label="Verified counters()" value="reports=0;signals=0;policy_checks=0"/></div><div className="grid sm:grid-cols-2 gap-3 mt-5"><a href="https://studio.genlayer.com/contracts" target="_blank" className="rounded-2xl bg-violet-600 px-4 py-3 text-center font-black">Open Studio</a><a href={explorer} target="_blank" className="rounded-2xl bg-slate-800 px-4 py-3 text-center font-black">Open Tx</a></div></Card>
-    <Card className="col-span-12 xl:col-span-7"><h3 className="text-2xl font-black mb-4">Contract Surface</h3><div className="grid md:grid-cols-3 gap-3"><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>register_report</b><p className="text-sm text-slate-400 mt-2">AI report hash, source URL, summary</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>attest_signal</b><p className="text-sm text-slate-400 mt-2">symbol, side, confidence, evidence URL</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>check_trade_intent</b><p className="text-sm text-slate-400 mt-2">policy limits, leverage, evidence text</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>project</b><p className="text-sm text-slate-400 mt-2">deployed app identity</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>counters</b><p className="text-sm text-slate-400 mt-2">report, signal, policy check counts</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>latest_state</b><p className="text-sm text-slate-400 mt-2">latest report, signal and policy result</p></div></div><pre className="no-data rounded-2xl p-4 mt-5 text-xs overflow-auto">{`npx genlayer call ${address} project\nnpx genlayer call ${address} counters`}</pre></Card>
+    <Card className="col-span-12 xl:col-span-5"><div className="flex items-center gap-3"><Layers3 className="text-cyan-300"/><div><h3 className="text-2xl font-black">GenLayerFinancePolicy</h3><p className="text-slate-400">{network} intelligent contract</p></div></div><div className="mt-5 space-y-3"><MetricTiny label="Contract address" value={<span className="break-all text-cyan-200">{address}</span>}/><MetricTiny label="Deployment tx" value={<span className="break-all text-violet-200">{tx}</span>}/><MetricTiny label="Live project()" value={liveProject}/><MetricTiny label="Live counters()" value={liveCounters}/></div><div className="grid sm:grid-cols-3 gap-3 mt-5"><button onClick={refresh} className="rounded-2xl bg-cyan-700 px-4 py-3 text-center font-black">Refresh State</button><a href="https://studio.genlayer.com/contracts" target="_blank" className="rounded-2xl bg-violet-600 px-4 py-3 text-center font-black">Open Studio</a><a href={explorer} target="_blank" className="rounded-2xl bg-slate-800 px-4 py-3 text-center font-black">Open Tx</a></div>{contractState?.error&&<div className="mt-4 no-data rounded-2xl p-3 text-xs text-amber-300">{contractState.error}</div>}</Card>
+    <Card className="col-span-12 xl:col-span-7"><h3 className="text-2xl font-black mb-4">Contract Surface</h3><div className="grid md:grid-cols-3 gap-3"><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>register_report</b><p className="text-sm text-slate-400 mt-2">AI report hash, source URL, summary</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>attest_signal</b><p className="text-sm text-slate-400 mt-2">symbol, side, confidence, evidence URL</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">WRITE</p><b>check_trade_intent</b><p className="text-sm text-slate-400 mt-2">policy limits, leverage, evidence text</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>project</b><p className="text-sm text-slate-400 mt-2">deployed app identity</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>counters</b><p className="text-sm text-slate-400 mt-2">report, signal, policy check counts</p></div><div className="holo-card rounded-2xl p-4"><p className="text-xs text-slate-400">VIEW</p><b>latest_state</b><p className="text-sm text-slate-400 mt-2">latest report, signal and policy result</p></div></div><pre className="no-data rounded-2xl p-4 mt-5 text-xs overflow-auto whitespace-pre-wrap">{`Live project(): ${liveProject}
+Live counters(): ${liveCounters}
+Live latest_state(): ${liveState}
+
+npx genlayer call ${address} project
+npx genlayer call ${address} counters
+npx genlayer call ${address} latest_state
+npx genlayer write ${address} check_trade_intent --args BTCUSDT long 1000 5 5000 20 "policy evidence"`}</pre></Card>
   </div>
 }
 function SignalEngine({signals}:any){ return <div className="grid grid-cols-12 gap-4"><Card className="col-span-12 xl:col-span-4"><h3 className="text-xl font-black mb-3">Conviction Ranking</h3>{signals.slice(0,24).map((s:any)=><SignalRow key={s.id} s={s}/>)}</Card><Card className="col-span-12 xl:col-span-8"><ResponsiveContainer height={620}><BarChart data={signals.slice(0,40)}><XAxis dataKey="symbol"/><YAxis/><Tooltip contentStyle={{background:'#091122',border:'1px solid #263759'}}/><Bar dataKey="momentum" fill="#22c55e"/><Bar dataKey="liquidity" fill="#06b6d4"/><Bar dataKey="risk" fill="#8b5cf6"/></BarChart></ResponsiveContainer></Card></div> }
@@ -475,5 +487,3 @@ function JinbotCrossPanel({data,refresh,command,setCommand,secret,setSecret,send
 }
 
 function SecurityPanel({serverLiveTrading}:any){ return <div className="grid md:grid-cols-3 gap-4"><Card><KeyRound/><h3 className="text-xl font-black mt-3">Private Keys</h3><p className="text-slate-400 mt-2">Keys stay in Vercel Environment Variables and are never returned to browser responses.</p></Card><Card><Lock/><h3 className="text-xl font-black mt-3">Execution Gate</h3><p className="text-slate-400 mt-2">Execution adapter status: <b className={serverLiveTrading?'text-emerald-300':'text-amber-300'}>{serverLiveTrading?'enabled':'locked'}</b>.</p></Card><Card><TimerReset/><h3 className="text-xl font-black mt-3">Automation Guard</h3><p className="text-slate-400 mt-2">Automation calls the same execution route and defaults to previews for safe demos.</p></Card></div> }
-
-

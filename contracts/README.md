@@ -8,14 +8,14 @@ This directory contains the deployed intelligent contract layer for GenLayer Int
 - Source: `contracts/genlayer_finance_policy.py`
 - Network: `studionet`
 - RPC: `https://studio.genlayer.com/api`
-- Address: `0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20`
-- Deployment tx: `0x0da0ec6a5f82e76cdbcfdf8e82b485af352e6c73e2b0f4e82c60847af8f0152e`
+- Address: `0x1C5973c789E5E6C92eAFE454E2cc70443F9cC3AC`
+- Deployment tx: `0xf59cd494af7ecdbdc35ea6ac09c3dd3fdbe19515b2e3689c1a49bf97e8b7e0a1`
 
 Verified reads:
 
 ```bash
-npx genlayer call 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20 project
-npx genlayer call 0xC7A40b2c5579Fc715C297D9173c14d37Aee95d20 counters
+npx genlayer call 0x1C5973c789E5E6C92eAFE454E2cc70443F9cC3AC project
+npx genlayer call 0x1C5973c789E5E6C92eAFE454E2cc70443F9cC3AC counters
 ```
 
 The contract records AI report provenance, source-backed signal attestations, and trade-intent policy checks. It does not custody user assets or execute trades.

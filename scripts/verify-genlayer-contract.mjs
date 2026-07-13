@@ -12,13 +12,18 @@ function genlayerCall(method) {
 
 const project = genlayerCall('project');
 const counters = genlayerCall('counters');
+const latestState = genlayerCall('latest_state');
 
 if (!project.includes('GenLayer Intelligent Finance Studio')) {
   throw new Error('project() verification failed');
 }
 
-if (!counters.includes('reports=0;signals=0;policy_checks=0')) {
+if (!/reports=\d+;signals=\d+;policy_checks=\d+/.test(counters)) {
   throw new Error('counters() verification failed');
+}
+
+if (!latestState.includes('latest_policy=')) {
+  throw new Error('latest_state() verification failed');
 }
 
 console.log(`GenLayer contract verified: ${address}`);

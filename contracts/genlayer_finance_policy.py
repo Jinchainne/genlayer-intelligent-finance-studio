@@ -52,7 +52,7 @@ Rules:
 - approve only when notional_usd <= max_notional_usd
 - approve only when leverage <= max_leverage
 - reject if the evidence text is empty or unrelated
-- return compact JSON only
+- return JSON only
 
 Intent:
 symbol=""" + symbol + """
@@ -63,15 +63,36 @@ max_notional_usd=""" + str(max_notional_usd) + """
 max_leverage=""" + str(max_leverage) + """
 evidence=""" + evidence + """
 
-Return exactly one line using this format:
-approved=yes|no;risk_level=low|medium|high;reason=short reason
+Return exactly this JSON schema:
+{"approved":"yes|no","risk_level":"low|medium|high","reason":"short reason"}
 """
-            return gl.exec_prompt(task).strip()
+            result = gl.nondet.exec_prompt(task, response_format="json")
+            approved = "yes" if str(result.get("approved", "no")).lower() in ["yes", "true", "approved"] else "no"
+            risk_level = str(result.get("risk_level", "medium")).lower()
+            if risk_level not in ["low", "medium", "high"]:
+                risk_level = "medium"
+            reason = str(result.get("reason", "policy review completed")).replace(";", ",").replace("\n", " ").strip()
+            return {
+                "approved": approved,
+                "risk_level": risk_level,
+                "reason": reason[:180],
+            }
 
-        decision = gl.eq_principle_strict_eq(judge_intent)
-        self.latest_policy_json = decision
+        def validator_fn(leader_result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            validator_result = judge_intent()
+            leader_data = leader_result.calldata
+            return (
+                validator_result["approved"] == leader_data["approved"]
+                and validator_result["risk_level"] == leader_data["risk_level"]
+            )
+
+        decision = gl.vm.run_nondet_unsafe(judge_intent, validator_fn)
+        decision_str = "approved=" + decision["approved"] + ";risk_level=" + decision["risk_level"] + ";reason=" + decision["reason"]
+        self.latest_policy_json = decision_str
         self.policy_check_count += 1
-        return decision
+        return decision_str
 
     @gl.public.view
     def project(self) -> str:
