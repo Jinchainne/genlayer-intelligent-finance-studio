@@ -75,7 +75,7 @@ export function getGenLayerConfig() {
     network,
     chain: getChain(network),
     rpc: process.env.GENLAYER_RPC_URL || deployment.rpc || 'https://studio.genlayer.com/api',
-    address: process.env.GENLAYER_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || deployment.address || '',
+    address: process.env.GENLAYER_CONTRACT_ADDRESS || deployment.address || process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '',
     contract: deployment.contract || 'GenLayerFinancePolicy',
     txHash: process.env.GENLAYER_DEPLOYMENT_TX || deployment.deploymentTx || deployment.txHash || '',
   };
